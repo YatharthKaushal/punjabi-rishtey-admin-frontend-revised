@@ -8,11 +8,12 @@ const DataTable = ({
   searchable = true, 
   onRowClick,
   actions,
-  searchPlaceholder = "Search..."
+  searchPlaceholder = "Search...",
+  defaultSort = { key: null, direction: 'asc' }
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const [sortConfig, setSortConfig] = useState(defaultSort);
   const itemsPerPage = 10;
 
   // Filter data based on search

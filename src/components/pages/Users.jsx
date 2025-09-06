@@ -277,6 +277,7 @@ const Users = () => {
         actions={actions}
         onRowClick={handleRowClick}
         searchPlaceholder="Search by name, email, or mobile..."
+        defaultSort={{ key: 'register_date', direction: 'desc' }}
       />
 
       <ConfirmDialog
