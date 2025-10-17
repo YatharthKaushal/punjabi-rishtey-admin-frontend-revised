@@ -16,6 +16,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import adminApi from "../../services/api";
+import selectOptions from "../../utils/selectOptions";
 
 const AddUser = () => {
   const navigate = useNavigate();
@@ -41,6 +42,8 @@ const AddUser = () => {
     mangalik: "",
     language: "",
     hobbies: "",
+    about_myself: "",
+    looking_for: "",
 
     // Birth details
     birth_time: "",
@@ -57,6 +60,7 @@ const AddUser = () => {
     drink: "",
     veg_nonveg: "",
     nri_status: false,
+    abroad_ready: "",
 
     // Location
     address: "",
@@ -176,6 +180,10 @@ const AddUser = () => {
       if (formData.mangalik) submitData.append("mangalik", formData.mangalik);
       if (formData.language) submitData.append("language", formData.language);
       if (formData.hobbies) submitData.append("hobbies", formData.hobbies);
+      if (formData.about_myself)
+        submitData.append("about_myself", formData.about_myself);
+      if (formData.looking_for)
+        submitData.append("looking_for", formData.looking_for);
 
       // Add nested fields
       const userData = {
@@ -194,12 +202,23 @@ const AddUser = () => {
           drink: formData.drink,
           veg_nonveg: formData.veg_nonveg,
           nri_status: formData.nri_status,
+          // map "" -> null for legacy compatibility
+          abroad_ready:
+            formData.abroad_ready === ""
+              ? null
+              : formData.abroad_ready === "true"
+              ? true
+              : formData.abroad_ready === "false"
+              ? false
+              : null,
         },
         location: {
           address: formData.address,
           city: formData.city,
           pincode: formData.pincode,
         },
+        about_myself: formData.about_myself,
+        looking_for: formData.looking_for,
       };
 
       // Add nested data as JSON string
@@ -473,6 +492,36 @@ const AddUser = () => {
                 placeholder="e.g., Reading, Music, Sports (comma separated)"
               />
             </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                About Myself
+              </label>
+              <textarea
+                name="about_myself"
+                value={formData.about_myself}
+                onChange={handleInputChange}
+                maxLength={300}
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="Tell a bit about yourself (max 300 chars)"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                I am looking for
+              </label>
+              <textarea
+                name="looking_for"
+                value={formData.looking_for}
+                onChange={handleInputChange}
+                maxLength={300}
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                placeholder="Describe your preferences (max 300 chars)"
+              />
+            </div>
           </div>
         </div>
 
@@ -695,6 +744,24 @@ const AddUser = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 pattern="[0-9]{6}"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Ready to move Abroad
+              </label>
+              <select
+                name="abroad_ready"
+                value={formData.abroad_ready}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+                {selectOptions.abroad_ready.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>

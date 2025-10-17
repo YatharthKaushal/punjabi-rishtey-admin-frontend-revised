@@ -44,6 +44,8 @@ const normalizeUserData = (data) => {
         ? data.hobbies.join(", ")
         : data.hobbies || "",
       mangalik: normalize(data.mangalik, selectOptions.mangalik),
+      about_myself: data.about_myself ?? "",
+      looking_for: data.looking_for ?? "",
       birth_details: data.birth_details || { birth_time: "", birth_place: "" },
       physical_attributes: {
         skin_tone: normalize(
@@ -70,6 +72,11 @@ const normalizeUserData = (data) => {
         nri_status: normalize(
           data.lifestyle?.nri_status,
           selectOptions.nri_status
+        ),
+        // Treat undefined (legacy) as empty string in form, we will map "" -> null on submit
+        abroad_ready: normalize(
+          data.lifestyle?.abroad_ready ?? null,
+          selectOptions.abroad_ready
         ),
       },
       location: data.location || { city: "", address: "" },

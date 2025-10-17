@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -58,11 +58,7 @@ const EditUserPage = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [selectedPhotoIndex, setSelectedPhotoIndex] = useState(null);
 
-  useEffect(() => {
-    fetchUserDetails();
-  }, [id]);
-
-  const fetchUserDetails = async () => {
+  const fetchUserDetails = useCallback(async () => {
     try {
       setError("");
       const data = await adminApi.fetchUserDetails(id);
@@ -75,10 +71,14 @@ const EditUserPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchUserDetails();
+  }, [fetchUserDetails]);
 
   const handleChange = (e, section, field, subSection) => {
-    const { name, value, type, checked } = e.target;
+    const { value, type, checked } = e.target;
     setFormData((prev) => {
       if (subSection) {
         return {
@@ -156,9 +156,13 @@ const EditUserPage = () => {
       const updatedPictures = formData.user.profile_pictures.filter(
         (_, i) => i !== index
       );
-      await adminApi.updateUserDetails(id, {
-        profile_pictures: updatedPictures,
-      });
+      await adminApi.updateUserDetails(
+        id,
+        {
+          profile_pictures: updatedPictures,
+        },
+        "user"
+      );
       setFormData((prev) => ({
         ...prev,
         user: { ...prev.user, profile_pictures: updatedPictures },
@@ -184,7 +188,7 @@ const EditUserPage = () => {
     }));
   };
 
-  const handleSubmit = async (e, section, endpoint) => {
+  const handleSubmit = async (e, section) => {
     e.preventDefault();
     setLoading(true);
     setError("");
@@ -192,12 +196,24 @@ const EditUserPage = () => {
     try {
       let dataToSend = formData[section];
       if (section === "user") {
+        const mapTri = (val) =>
+          val === ""
+            ? null
+            : val === "true"
+            ? true
+            : val === "false"
+            ? false
+            : null;
         dataToSend = {
           ...dataToSend,
           hobbies: formData.user.hobbies
             .split(",")
             .map((h) => h.trim())
             .filter((h) => h),
+          lifestyle: {
+            ...formData.user.lifestyle,
+            abroad_ready: mapTri(formData.user.lifestyle.abroad_ready),
+          },
         };
       }
       await adminApi.updateUserDetails(id, dataToSend, section);
@@ -424,11 +440,37 @@ const EditUserPage = () => {
               onChange={(e) => handleChange(e, "user", "hobbies")}
               placeholder="Comma-separated hobbies"
             />
+            <div className="sm:col-span-2 lg:col-span-3">
+              <label className="text-sm font-medium text-gray-700">
+                About Myself
+              </label>
+              <textarea
+                name="about_myself"
+                value={formData.user.about_myself}
+                onChange={(e) => handleChange(e, "user", "about_myself")}
+                maxLength={300}
+                rows={4}
+                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Tell a bit about yourself (max 300 chars)"
+              />
+            </div>
+            <div className="sm:col-span-2 lg:col-span-3">
+              <label className="text-sm font-medium text-gray-700">
+                I am looking for
+              </label>
+              <textarea
+                name="looking_for"
+                value={formData.user.looking_for}
+                onChange={(e) => handleChange(e, "user", "looking_for")}
+                maxLength={300}
+                rows={4}
+                className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="Describe your preferences (max 300 chars)"
+              />
+            </div>
           </div>
           <button
-            onClick={(e) =>
-              handleSubmit(e, "user", `/api/admin/auth/users/edit/${id}`)
-            }
+            onClick={(e) => handleSubmit(e, "user")}
             className="mt-6 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
           >
             Save Basic Info
@@ -465,9 +507,7 @@ const EditUserPage = () => {
             />
           </div>
           <button
-            onClick={(e) =>
-              handleSubmit(e, "user", `/api/admin/auth/users/edit/${id}`)
-            }
+            onClick={(e) => handleSubmit(e, "user")}
             className="mt-6 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
           >
             Save Birth Details
@@ -540,9 +580,7 @@ const EditUserPage = () => {
             />
           </div>
           <button
-            onClick={(e) =>
-              handleSubmit(e, "user", `/api/admin/auth/users/edit/${id}`)
-            }
+            onClick={(e) => handleSubmit(e, "user")}
             className="mt-6 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
           >
             Save Physical Attributes
@@ -600,6 +638,18 @@ const EditUserPage = () => {
                 handleChange(e, "user", "nri_status", "lifestyle")
               }
               options={selectOptions.nri_status}
+            />
+            <InputField
+              label="Ready to move Abroad"
+              name="abroad_ready"
+              section="user"
+              subSection="lifestyle"
+              type="select"
+              value={formData.user.lifestyle.abroad_ready}
+              onChange={(e) =>
+                handleChange(e, "user", "abroad_ready", "lifestyle")
+              }
+              options={selectOptions.abroad_ready}
             />
           </div>
           <button

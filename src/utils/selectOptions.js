@@ -104,6 +104,11 @@ const selectOptions = {
     { value: "false", label: "No" },
     { value: "true", label: "Yes" },
   ],
+  abroad_ready: [
+    { value: "", label: "Unspecified" },
+    { value: "true", label: "Yes" },
+    { value: "false", label: "No" },
+  ],
 };
 
 export default selectOptions;

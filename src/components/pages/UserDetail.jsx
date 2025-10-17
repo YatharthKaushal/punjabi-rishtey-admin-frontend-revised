@@ -1,5 +1,5 @@
 // components/pages/UserDetail.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -34,22 +34,7 @@ const UserDetail = () => {
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
 
-  useEffect(() => {
-    fetchUserDetails();
-  }, [id]);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (showStatusDropdown && !event.target.closest('.status-dropdown-container')) {
-        setShowStatusDropdown(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showStatusDropdown]);
-
-  const fetchUserDetails = async () => {
+  const fetchUserDetails = useCallback(async () => {
     try {
       const data = await adminApi.fetchUserDetails(id);
       setUser(data);
@@ -58,7 +43,25 @@ const UserDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchUserDetails();
+  }, [fetchUserDetails]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        showStatusDropdown &&
+        !event.target.closest(".status-dropdown-container")
+      ) {
+        setShowStatusDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [showStatusDropdown]);
 
   const handleToggleMembership = async () => {
     try {
@@ -72,7 +75,7 @@ const UserDetail = () => {
 
   const handleStatusChange = async (newStatus) => {
     if (newStatus === user.status) return;
-    
+
     setUpdatingStatus(true);
     try {
       if (newStatus === "Pending") {
@@ -90,14 +93,28 @@ const UserDetail = () => {
   };
 
   const statusOptions = [
-    { value: "Pending", label: "Pending", color: "bg-yellow-100 text-yellow-800" },
-    { value: "Approved", label: "Approved", color: "bg-green-100 text-green-800" },
+    {
+      value: "Pending",
+      label: "Pending",
+      color: "bg-yellow-100 text-yellow-800",
+    },
+    {
+      value: "Approved",
+      label: "Approved",
+      color: "bg-green-100 text-green-800",
+    },
     { value: "Expired", label: "Expired", color: "bg-red-100 text-red-800" },
-    { value: "Canceled", label: "Canceled", color: "bg-gray-100 text-gray-800" },
+    {
+      value: "Canceled",
+      label: "Canceled",
+      color: "bg-gray-100 text-gray-800",
+    },
   ];
 
   const getStatusColor = (status) => {
-    const statusOption = statusOptions.find(option => option.value === status);
+    const statusOption = statusOptions.find(
+      (option) => option.value === status
+    );
     return statusOption ? statusOption.color : "bg-gray-100 text-gray-800";
   };
 
@@ -123,7 +140,7 @@ const UserDetail = () => {
   if (loading) return <LoadingSpinner />;
   if (!user) return <div>User not found</div>;
 
-  const profileCompletion = user.profileCompletion || 75; // Mock value for now
+  // const profileCompletion = user.profileCompletion || 75; // Mock value for now
 
   return (
     <div className="space-y-6">
@@ -158,26 +175,36 @@ const UserDetail = () => {
                   <button
                     onClick={() => setShowStatusDropdown(!showStatusDropdown)}
                     disabled={updatingStatus || user.is_deleted}
-                    className={`flex items-center space-x-2 px-3 py-1 text-sm rounded-full font-medium transition-colors ${getStatusColor(user.status)} ${
-                      user.is_deleted ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80 cursor-pointer'
+                    className={`flex items-center space-x-2 px-3 py-1 text-sm rounded-full font-medium transition-colors ${getStatusColor(
+                      user.status
+                    )} ${
+                      user.is_deleted
+                        ? "opacity-50 cursor-not-allowed"
+                        : "hover:opacity-80 cursor-pointer"
                     }`}
                   >
                     <span>{updatingStatus ? "Updating..." : user.status}</span>
                     {!user.is_deleted && <ChevronDown className="h-3 w-3" />}
                   </button>
-                  
+
                   {showStatusDropdown && !user.is_deleted && (
                     <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border z-50 min-w-[120px]">
                       {statusOptions.map((option) => (
                         <button
                           key={option.value}
                           onClick={() => handleStatusChange(option.value)}
-                          disabled={updatingStatus || option.value === user.status}
+                          disabled={
+                            updatingStatus || option.value === user.status
+                          }
                           className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 transition-colors first:rounded-t-lg last:rounded-b-lg ${
-                            option.value === user.status ? 'opacity-50 cursor-not-allowed' : ''
+                            option.value === user.status
+                              ? "opacity-50 cursor-not-allowed"
+                              : ""
                           }`}
                         >
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${option.color}`}>
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${option.color}`}
+                          >
                             {option.label}
                           </span>
                         </button>
@@ -384,6 +411,17 @@ const UserDetail = () => {
             label="NRI Status"
             value={user.lifestyle?.nri_status ? "Yes" : "No"}
           />
+          <InfoItem
+            label="Ready to move Abroad"
+            value={
+              user.lifestyle?.abroad_ready === null ||
+              user.lifestyle?.abroad_ready === undefined
+                ? "Unspecified"
+                : user.lifestyle?.abroad_ready
+                ? "Yes"
+                : "No"
+            }
+          />
         </div>
       </div>
 
@@ -485,6 +523,33 @@ const UserDetail = () => {
               </>
             )}
           </div>
+        </div>
+      )}
+
+      {/* About Sections */}
+      {(user.about_myself || user.looking_for) && (
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">About</h2>
+          {user.about_myself && (
+            <div className="mb-4">
+              <h3 className="text-sm font-medium text-gray-700 mb-1">
+                About Myself
+              </h3>
+              <p className="text-gray-900 whitespace-pre-line">
+                {user.about_myself}
+              </p>
+            </div>
+          )}
+          {user.looking_for && (
+            <div>
+              <h3 className="text-sm font-medium text-gray-700 mb-1">
+                I am looking for
+              </h3>
+              <p className="text-gray-900 whitespace-pre-line">
+                {user.looking_for}
+              </p>
+            </div>
+          )}
         </div>
       )}
 
